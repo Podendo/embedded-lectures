@@ -57,7 +57,7 @@ scheduling, resource-management algorithms.
  * _Services_ are operations that the kernel performs on an object or, generally
  operations such as timing, Interrupt handling, memory/device management service
 
-## THe Scheduler
+## The Scheduler
 
 ### Schedulable entities
 
@@ -158,16 +158,16 @@ the highest and '255' is the lowest. Some kernels appoint the priorities in  the
 reversed order. With a  _preemptive-priority-based_ scheduler, each  task has  a
 priority, and the highests priority task runs first. If a  task with  a priority
 higher that the current task becomes ready to run, the kernel immediately  saves
-the current task`s context in its Task-Control-Block and switches to the higher-
+the current task's context in its Task-Control-Block and switches to the higher-
 priority task.
-	Although task are asigned a priority when they are created, a task`s pri
+	Although task are asigned a priority when they are created, a task's pri
 ority can be changed dynamically using kernel-provided syscalls. The ability  to
 change task priority dynamically allows an embedded applications the flexibility
 to adjust to external events as they occur, creating a 'true' real-time system.
 
 #### _Round-Robin Scheduling_
 
-Round-Robin scheduling  provides each task an equal share of the CPU`s execution
+Round-Robin scheduling  provides each task an equal share of the CPU's execution
 time. Pure round-robin scheduling cannot satisfy real-time systems  requirements
 because in real-time os`es, tasks perform work of varying degrees of importance.
 Instead, preemptive, priority-based scheduling can be augmented with round-robin
@@ -176,7 +176,7 @@ tasks if the save priority. With time-slicing, each task executes for a  defined
 
 With time slicing, each task executes for a defined interval -  time-slice, in an
 ongoing cycle, which is the round-robin. A run-time counter tracks the time slice
-for each task, incrementing on every clock tick. When one task`s time-slice compl
+for each task, incrementing on every clock tick. When one task's time-slice compl
 etes, the counter is cleared, and the task is placed at the end of the cycle.
 Newly added tasks of the same priority are placed at the end  of the cycle,  with
 their run-time counters initialized to '0' value.
@@ -184,36 +184,48 @@ If a task in a round-robin cycle is preempted by a higher-priority task, its run
 time count is saved as context in TaskControlBlock and then restored when the int
 errupted task is again eligible for execution.
 
+## Objects
+
+`Kernel objects are special constructs that are the building blocks for the apps
+development for real-time embedded systems. The most common RTOS kernel objects`
+
+* _Tasks_ are concurrent and independent thrreads of execution that can complete
+for CPU execution time
+* _Semaphores_ are token-like objects that can be incremented or decremented  by
+tasks for synchronization or mutual exclusions.
+* _Message queues_ are buffer-like data structures that can be sued for synchoni
+zation, mutual exclusion, and data exchange by  passing messages  between tasks.
+
+## Services
+
+`Along with objcets, most kernel provide services that help developers create an
+applications for realtime embedded systems. These services comprise sets of  API
+calls that can be used to perform operations on kernel objects or can be used in
+general to facilitate timer-management, interrupt handling, device I/O, and memo
+ry management. Again, other services might be provided; these services are those
+most commonly found un TROS kernels.`
+
+## Key Characteristics of an RTOS
+
+An application requirements define the requirements of the underlying RTOS. Some
+of the more common attributes are:
+
+* reliability - combination of RTOS, BSP, and apps architecture must be reliable
+* predictability - time requirements for completing tasks (syscalls) is the key
+* performance - RTOS embedded systems must be fast-enough not to meet a deadline
+* compactness - static and dynamic memory consumption of the RTOS / APPS
+* scalability - those OS`es must be able to scale up or down for app`s require
 
 
+# Conclusion:
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* RTOSes are best suited for realtime, apps-specific embedded systems, while the
+GPOSES are typically used for general-purpose systems.
+* RTOSes are programs that schedule execution in a timely manner, manage systems
+resources, and provide a consistent foundation for developing application code.
+* Kernels are the code module of every RTOS and typically contain kernel objects,
+services, and scheduler.
+* Kernels can deploy different alogithms for task scheduling. The most common two
+alogrithms of scheduling are preemptive priority-based and round-robin scheduling
+* PRTOSes for real-time embedded systems should be reliable, predictable, high -
+performance, compact, and scalable.

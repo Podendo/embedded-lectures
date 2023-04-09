@@ -310,5 +310,3 @@ from a host.
 	* Application initialization
 * After the target system is initialized, application developers can use this
 platform to download, test, and debug applications that use an underlying RTOS
-
-
