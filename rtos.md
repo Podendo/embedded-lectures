@@ -214,7 +214,7 @@ of the more common attributes are:
 * predictability - time requirements for completing tasks (syscalls) is the key
 * performance - RTOS embedded systems must be fast-enough not to meet a deadline
 * compactness - static and dynamic memory consumption of the RTOS / APPS
-* scalability - those OS`es must be able to scale up or down for app`s require
+* scalability - those OS'es must be able to scale up or down for app's require
 
 
 # Conclusion:
