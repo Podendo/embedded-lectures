@@ -244,6 +244,11 @@ With a counting semaphore, the signaling task can continue to execute and incre-
 ment a count at uts own pace, while the wait task, when  unblocked, executes  at
 its onw pace. Initial value of semaphore is 0.
 
+The lower priority tWaitTask tries to acquire this semaphore but blocks until  a
+tSignalTask makes the  semaphore available  by performing a release on it.  Even
+then, tWaitTask will waits in the ready state until the higher priority tSignal-
+Task eventually relinquishes the CPU my making a blocking call / delaying itself.
+
 ```
 tWaitTask ()	/* lower priority */
 {
@@ -258,12 +263,27 @@ tSignalTask ()	/* higher priority */
 	:
 }
 ```
-The lower priority tWaitTask tries to acquire this semaphore but blocks until  a
-tSignalTask makes the  semaphore available  by performing a release on it.  Even
-then, tWaitTask will waits in the ready state until the higher priority tSignal-
-Task eventually relinquishes the CPU my making a blocking call / delaying itself.
+Because the tSignalTask is set to a higher priority and executes at its own rate,
+it might increment the counting semaphore multiple times before tWaitTask starts
+processing the first request. Hence, the counting semaphore allows credit build-
+up of the number of times that the tWaitTask can execute before the semaphore be
+comes unavailable. This credit-tracking mechanism is useful if tSignalTask relea
+ses semaphores in burst, giving tWaitTask the chance tp catch up every once in a
+while. Using this mechanism with an _ISR_ that acts in a similar way to the sign
+al task can be quite useful. Interrupts gave higher priorities than tasks. Hence,
+an interrupt's assosiated higher priority ISR executes when the hardware  inter-
+rupt is triggered and typically offloads some work to a lower-priority task wait
+ing on a semaphore.
 
 * ___single-shared-resource-access synchronization___
+It is used to provide for mutually exclusive access to a shared resource. A shar
+ed resource might be a memory location, a data structure, or an I/O device-essen
+tially anything that might have to be shared between two or more concurrent thre
+ads of execution. A semaphore can be used to serialize access to a shared resour
+ce. In this scenario, a binary semaphore is initially  created in the  available
+state (value = 1). and it used to protect the shared resource. To access the sha
+red resource, tasks-1-2 needs to first succesfully  acquire the binary semaphore
+before making any type of operations on the- shared resource.
 
 ```
 tAccessTask ()
@@ -275,7 +295,26 @@ tAccessTask ()
 	:
 }
 ```
+One of the dangers to this desigh is that any task can accidentally release  the
+binary semaphore, even one that never acquired the semaphore in the first place.
+If this issue were to happen in this scenario, both tAccessTask-1-2 could end up
+acquiring the semaphore and reading and writing to the shared resource at the sa
+me time, which would lead to incorrect program behaviour.
+
+To ensure that this problem does not happen, use a mutex semaphore instead. Beca
+use a mutex supports the concept of ownership, so it ensures that only one  task
+that successfully acquired (locked) the mutex can release (unlock) it.
+
 * ___recursive shared-resource-access synchronization___
+
+If a  semaphore were used in this scenario. the task would end up blocking, caus
+ing a deadlock. When a routine is called from a task, the routine effectively be
+comes a part of the task. When RoutineA runs, therefore, it is running as a part
+of tAccessTask. RoutineA trying to acquire the semaphore is effectively the same
+as tAccessTask trying to acquire the same  semaphore. In this case,  tAccessTask
+would end up blocking while waiting for the unavailable semaphore that is has al
+ready. So, one solution  to this - to use a recursive  mutex. As a result,  when
+Routines A and B attempt to lock the mutex, the succeed without blocking.
 
 ```
 tAccessTask (){
@@ -304,7 +343,12 @@ Routine B ()
 	:
 }
 ```
+
 * ___multiple shared-resource-access synchronization___
+For cases in which multiple equivalent shared resources are used, counting sema-
+phore comes in handy. Note that this scenario does not work if the shared resour
+ces are not equivalent. The counting semaphore's  count is initially set to  the
+number of equivalent shared resources(if resources are 2, the sema counter is 2)
 
 ```
 tAccessTask ()
@@ -316,6 +360,12 @@ tAccessTask ()
 	:
 }
 ```
+As with the binary semaphores, this desigh can cause problems uf a task releases
+a semaphore that it did not acquired. So, mutex can provide  built-in-protection
+in the application design. A separate mutex can be assigned for each shared reso
+urce. When trying to lock a mutex, each task tries to acquire the first mutex in
+a non-blocking way. If unsuccessful, each task then tries to acquire the  second
+mutex in a blocking way.
 
 ```
 tAccessTask ()
@@ -328,9 +378,36 @@ tAccessTask ()
 	:
 }
 ```
-
+Using this scenario, task 1 and 2 is successfull in locking  mutex and therefore
+having access to a shared resource. When task 3 runs, it tries to lock the first
+mutex in a non-blocking way. Of this mutex is unlocked, task 3 locks  it and  is
+granted access to the first shared resource. If the first mutex is still locked,
+however, task 3 tries  to acquire  the second mutex,  ecept that this time, this
+would be a blocking-way: if the second mutex is also  locked, task 3 blocks  and
+waits for the secont mutex until it is unlocked.
 
 #Conclusion:
 
-TDB
-
+* Using semaphores allows multiple tasks, or ISRs to task, to synchronize execut
+ion or coordinate mutually exclusive access to a shared resource.
+* Semaphores have an assosiated semaphore control block (SCB), a unique ID, a us
+er-assigned value(binary or count). and a task-waiting list.
+* Three common types of semaphores are binary, counting, mutual exclusions, each
+of whicj can be acquired or released.
+* Binary semaphores are either available(1) or unavailable(0). Counting semaphor
+es are also either available(1) or unavailable(0). Mutexes, however,  are either
+unlocked(0) or locked(lock count = 1).
+* Acquiring a binary or counting semaphore results in decrementing its value  or
+count, except when the semaphore value is already 0 - in this case the requested
+task blockts if it chooses to wait for the semaphore.
+* Releasing a binary or counting semaphore results in incrementing the value  of
+count, unless it is a binary semaphore with a value of 1 or bounded semaphore at
+its maximum count. In this case, the release of additional semaphores is typical
+ly ignored.
+* Recursive mutexes can be locked and  unlocked multiple times by the task  that
+owns them. Acquiring an unlocked recursive mutex increments its lock count while
+releasing it decrements the lock count.
+* Typical semaphore operations that kernel provide for  application  development
+include creating and  deleting semaphores,  acquiring and releasing  semaphores,
+flushing semaphore's task-waiting list, and providing dynamic access to semapho-
+re information.
